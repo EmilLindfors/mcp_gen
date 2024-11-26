@@ -1,5 +1,6 @@
-use std::{env, fs, path::Path};
+use std::{fs, path::Path};
 
+use schemars::schema::{Schema, SchemaObject};
 use typify::{TypeSpace, TypeSpaceImpl, TypeSpaceSettings, UnknownPolicy};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -19,7 +20,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_derive("PartialEq".to_string());
 
     // Enable struct builders
-    settings.with_struct_builder(true);
+    //settings.with_struct_builder(true);
+
+        // Create a schema object for the Result type
+        let result_schema = SchemaObject {
+            instance_type: Some(schemars::schema::InstanceType::Object.into()),
+            object: Some(Box::new(schemars::schema::ObjectValidation {
+                properties: {
+                    let mut map = std::collections::BTreeMap::new();
+                    map.insert("_meta".to_string(), Schema::Object(SchemaObject {
+                        instance_type: Some(schemars::schema::InstanceType::Object.into()),
+                        metadata: Some(Box::new(schemars::schema::Metadata {
+                            description: Some("This result property is reserved by the protocol to allow clients and servers to attach additional metadata to their responses.".to_string()),
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    }));
+                    map
+                },
+                additional_properties: Some(Box::new(Schema::Object(SchemaObject::default()))),
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
 
     // Handle special types that need replacement
     settings.with_replacement(
@@ -28,6 +51,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         [TypeSpaceImpl::FromStr, TypeSpaceImpl::Display]
             .iter()
             .copied(),
+    );
+
+       // Add the Result schema conversion instead of replacement
+       settings.with_conversion(
+        result_schema,
+        "MCPResult",
+        [
+            TypeSpaceImpl::FromStr,
+            TypeSpaceImpl::Display,
+            TypeSpaceImpl::Default,
+        ].iter().copied(),
     );
 
     // Add any external crate dependencies
