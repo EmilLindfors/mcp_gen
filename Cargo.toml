@@ -4,7 +4,7 @@ description = "A library that exposes the model context protocol specificiation 
 version = "0.1.0"
 edition = "2021"
 authors = ["Emil Lindfors <[email protected]>"]
-keywords = ["gen", "anthropic", "model context protocol"]
+keywords = ["gen", "anthropic", "mcp protocol"]
 categories = ["API bindings"]
 license = "MIT"
 
